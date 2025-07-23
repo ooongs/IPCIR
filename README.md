@@ -210,7 +210,7 @@ We have provided the experimental results of our LDRE for your evaluation on the
 
 
 ## 🏫About us
-Thank you for your interest in this project. The project is supervised by the ReLER Lab at Zhejiang University’s College of Computer Science and Technology and [HUAWEI](https://www.huawei.com/cn/). ReLER was established by [Yang Yi](https://scholar.google.com/citations?user=RMSuNFwAAAAJ&hl=en), a Qiu Shi Distinguished Professor at Zhejiang University. Our dedicated team of contributors includes [You Li](https://scholar.google.com/citations?user=2lRNus0AAAAJ&hl=en&oi=sra),[Fan Ma](https://scholar.google.com/citations?hl=en&user=FyglsaAAAAAJ), [Yi Yang](https://scholar.google.com/citations?user=RMSuNFwAAAAJ&hl=en).
+Thank you for your interest in this project. The project is supervised by the ReLER Lab at Zhejiang University’s College of Computer Science and Technology. ReLER was established by [Yang Yi](https://scholar.google.com/citations?user=RMSuNFwAAAAJ&hl=en), a Qiu Shi Distinguished Professor at Zhejiang University. Our dedicated team of contributors includes [You Li](https://scholar.google.com/citations?user=2lRNus0AAAAJ&hl=en&oi=sra),[Fan Ma](https://scholar.google.com/citations?hl=en&user=FyglsaAAAAAJ), [Yi Yang](https://scholar.google.com/citations?user=RMSuNFwAAAAJ&hl=en).
 
 ## Contact us
 If you have any questions, feel free to contact me via email zdw1999@zju.edu.cn 

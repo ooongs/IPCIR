@@ -563,7 +563,7 @@ class VLDyHead(torch.nn.Module):
         self.cfg = cfg
         # bert_cfg = BertConfig.from_pretrained(cfg.MODEL.LANGUAGE_BACKBONE.MODEL_TYPE)
         if cfg.MODEL.LANGUAGE_BACKBONE.MODEL_TYPE == "bert-base-uncased":
-            lang_cfg = BertConfig.from_pretrained('/mnt/data0/liyou/ckpt/bert-base-uncased')
+            lang_cfg = BertConfig.from_pretrained('google-bert/bert-base-uncased')
         elif cfg.MODEL.LANGUAGE_BACKBONE.MODEL_TYPE == "clip":
             lang_cfg = cfg
         else:

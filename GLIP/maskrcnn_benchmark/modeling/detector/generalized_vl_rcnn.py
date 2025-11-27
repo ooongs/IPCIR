@@ -89,7 +89,7 @@ class GeneralizedVLRCNN(nn.Module):
                 self.tokenizer = CLIPTokenizerFast.from_pretrained("openai/clip-vit-base-patch32",
                                                                             from_slow=True)
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained('/mnt/data0/liyou/ckpt/bert-base-uncased')
+            self.tokenizer = AutoTokenizer.from_pretrained('google-bert/bert-base-uncased')
         self.tokenizer_vocab = self.tokenizer.get_vocab()
         self.tokenizer_vocab_ids = [item for key, item in self.tokenizer_vocab.items()]
 

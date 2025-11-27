@@ -676,7 +676,7 @@ def equip_elite_mapper( device, mapper_model_path, mapper_local_model_path, pipe
 
     mapper_local = MapperLocal(input_dim=1024, output_dim=768)
 
-    image_encoder = CLIPVisionModel.from_pretrained("/mnt/data2/liyou/ckpt/clip-vit-large-patch14")
+    image_encoder = CLIPVisionModel.from_pretrained("openai/clip-vit-large-patch14")
 
     for _name, _module in pipe.unet.named_modules():
         

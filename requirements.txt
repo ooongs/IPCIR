@@ -121,7 +121,7 @@ stanza==1.4.2
 supervision==0.22.0
 sympy==1.13.1
 tensorboardX==2.6.2.2
-tifffile==2025.5.10
+tifffile[all]==2025.5.10
 timm==0.6.13
 tokenizers==0.19.1
 tomli==2.0.1

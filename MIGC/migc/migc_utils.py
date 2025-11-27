@@ -119,7 +119,7 @@ def load_migc(unet, attention_store, pretrained_MIGC_path: Union[str, Dict[str, 
 
 def offlinePipelineSetupWithSafeTensor(sd_safetensors_path):
     project_dir = os.path.dirname(os.path.dirname(__file__))
-    migc_ckpt_path = os.path.join(project_dir, '/mnt/data0/liyou/ckpt/MIGC_SD14.ckpt')
+    migc_ckpt_path = os.path.join(project_dir, '/home/llq/WorkSpace/code/Course/VL/Imagine-and-Seek/weights/MIGC_SD14.ckpt')
     clip_model_path = os.path.join(project_dir, '/mnt/data2/liyou/ckpt/sd1_5/text_encoder')
     clip_tokenizer_path = os.path.join(project_dir, '/mnt/data2/liyou/ckpt/sd1_5/tokenizer')
     original_config_file = os.path.join(project_dir, 'migc_gui_weights/v1-inference.yaml')

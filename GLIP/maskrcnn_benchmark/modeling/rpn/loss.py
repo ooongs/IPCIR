@@ -544,7 +544,7 @@ class ATSSLossComputation(torch.nn.Module):
                 self.tokenizer = CLIPTokenizerFast.from_pretrained("openai/clip-vit-base-patch32",
                                                                             from_slow=True)
         else:
-            self.tokenizer = AutoTokenizer.from_pretrained('/mnt/data0/liyou/ckpt/bert-base-uncased')
+            self.tokenizer = AutoTokenizer.from_pretrained('google-bert/bert-base-uncased')
 
         # if use shallow contrastive loss
         if self.cfg.MODEL.DYHEAD.FUSE_CONFIG.USE_SHALLOW_CONTRASTIVE_LOSS \

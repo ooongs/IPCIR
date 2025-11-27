@@ -8,7 +8,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Generate a question-answer instruction tuning dataset.")
 parser.add_argument('--dataset',default='circo',type=str)
-parser.add_argument('--dataset_path',default='/mnt/data2/comp_data/CIRCO',type=str) # '/mnt/data2/comp_data/CIRCO'
+parser.add_argument('--dataset_path',default='/home/llq/WorkSpace/code/Course/VL/dataset/CIRCO',type=str) # '/mnt/data2/comp_data/CIRCO'
 parser.add_argument('--dress',default='toptee',type=str)
 args = parser.parse_args()
 

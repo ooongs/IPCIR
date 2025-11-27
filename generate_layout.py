@@ -60,7 +60,7 @@ def main():
     parser.add_argument("--preprocess-type", default="targetpad", type=str, choices=['clip', 'targetpad'],
                         help="Preprocess pipeline to use")
     parser.add_argument('--mode',default='circo_test',type=str)
-    parser.add_argument("--dataset_path", type=str, help="Path to the dataset", required=False, default='/mnt/data2/comp_data/CIRCO')
+    parser.add_argument("--dataset_path", type=str, help="Path to the dataset", required=False, default='/home/llq/WorkSpace/code/Course/VL/dataset/CIRCO')
 
     args = parser.parse_args()
 

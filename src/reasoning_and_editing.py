@@ -3,7 +3,7 @@ import time
 import traceback
 
 from tqdm import tqdm
-# import openai
+from openai import OpenAI
 from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -11,17 +11,22 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Generate a question-answer instruction tuning dataset.")
 parser.add_argument('--dress',default='toptee',type=str)
-parser.add_argument('--model_path',default='/mnt/data0/liyou/ckpt/Qwen1.5-32B-Chat-GPTQ-Int4',type=str)
+parser.add_argument('--model_path',default='/home/llq/WorkSpace/LLM/Qwen/Qwen1.5-32B-Chat',type=str)
 args = parser.parse_args()
 
 # openai.api_key = "your_api_key"
+# vllm serve Qwen/Qwen1.5-32B-Chat --dtype auto --port 8000 --trust-remote-code --max_model_len 4096
 Qwen_model_path = args.model_path
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="EMPTY",
+)
 
-tokenizer = AutoTokenizer.from_pretrained(Qwen_model_path, trust_remote_code=True)
-model = AutoModelForCausalLM.from_pretrained(Qwen_model_path, device_map="auto", trust_remote_code=True).eval()
+# tokenizer = AutoTokenizer.from_pretrained(Qwen_model_path, trust_remote_code=True)
+# model = AutoModelForCausalLM.from_pretrained(Qwen_model_path, device_map="auto", trust_remote_code=True).eval()
 
-# DATASET = 'circo' # 'cirr', 'fashioniq'
-DATASET = 'cirr_val'
+DATASET = 'circo' # 'cirr', 'fashioniq'
+# DATASET = 'cirr_val'
 
 if DATASET == 'circo':
     SPLIT = 'test'
@@ -86,6 +91,7 @@ for ans in tqdm(annotations):
                     messages.append({"role": "user", "content": "Image Content: a man adjusting a woman's tie.\nInstruction: has the woman and the man with the roles switched.\n"})
                     messages.append({"role": "assistant", "content": "Edited Description: a woman adjusting a man's tie."})
                     messages.append({"role": "user", "content": "Image Content: {}\nInstruction: {}\nEdited Description:".format(cap, rel_cap)})
+                    '''
                     device = "cuda" 
                     text = tokenizer.apply_chat_template(
                         messages,
@@ -102,9 +108,15 @@ for ans in tqdm(annotations):
                     generated_ids = [
                         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
                     ]
-                    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
-                    multi_gpt.append(response.strip('\n'))
+                    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]'''
+                    completion = client.chat.completions.create(
+                        model="Qwen/Qwen1.5-32B-Chat",
+                        messages=messages,
+                        max_tokens=1024,
+                        temperature=0.0,
+                    )
+                    response = completion.choices[0].message.content
+                    multi_gpt.append(response.strip())
                     break
                 except:
                     traceback.print_exc()
@@ -145,5 +157,5 @@ for ans in tqdm(annotations):
                 time.sleep(3)
 
 
-with open(input_json, "w") as f:
+with open(input_json+'2', "w") as f:
     f.write(json.dumps(annotations, indent=4))

@@ -5,6 +5,7 @@ from tqdm import tqdm
 import PIL.Image as Image
 from lavis.models import load_model_and_preprocess
 import argparse
+import os
 
 parser = argparse.ArgumentParser(description="Generate a question-answer instruction tuning dataset.")
 parser.add_argument('--dataset',default='circo',type=str)
@@ -123,6 +124,7 @@ for ans in tqdm(annotations):
 
 
 if DATASET == 'circo':
+    os.makedirs("CIRCO/annotations/", exist_ok=True)
     with open("CIRCO/annotations/{}".format(f'{SPLIT}.json'), "w") as f:
         f.write(json.dumps(annotations, indent=4))
 elif DATASET == 'circo_val':

@@ -33,16 +33,11 @@ from layout_utils.utils import *
 
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(description="Generate a question-answer instruction tuning dataset.")
 
     # Mandatory parameter
     parser.add_argument("--sources",default='coco',type=str)
-
-    ####### For physical multi card
-    parser.add_argument('--start_idx',default=0,type=int)
-    parser.add_argument('--idx',default=0,type=int)
-    parser.add_argument('--gpu_num',default=1, type=int)
     
     ###### File Path in Generation
     parser.add_argument('--output_path',default='',type=str)
@@ -50,7 +45,6 @@ def main():
     parser.add_argument('--prompt_config',default='./prompt/prompt_layout_v2.yaml', type=str)
     ###### Layout Generation
     parser.add_argument('--model_type',default='qwen',type=str)
-    parser.add_argument('--random_layout',action='store_true',help = 'for ablation study')
     parser.add_argument("--batch_size",default=1,type=int)
     ###### Debug
     parser.add_argument('--visualize',action='store_true',help = 'Visualize the generated layouts')
@@ -85,30 +79,30 @@ def main():
     if args.mode == 'fashioniq_shirt':
         # for dress_type in ['shirt', 'dress', 'toptee']:
         relative_val_dataset = FashionIQDataset(args.dataset_path, 'val', ['shirt'], 'relative', preprocess)
-        run(relative_val_dataset, preprocess, args)
+        await run(relative_val_dataset, preprocess, args)
     if args.mode == 'fashioniq_dress':
         relative_val_dataset = FashionIQDataset(args.dataset_path, 'val', ['dress'], 'relative', preprocess)
-        run(relative_val_dataset, preprocess, args)
+        await run(relative_val_dataset, preprocess, args)
     if args.mode == 'fashioniq_toptee':
         relative_val_dataset = FashionIQDataset(args.dataset_path, 'val', ['toptee'], 'relative', preprocess)
-        run(relative_val_dataset, preprocess, args)
+        await run(relative_val_dataset, preprocess, args)
 
     elif args.mode == 'cirr':
         relative_val_dataset = CIRRDatasetV2(args.dataset_path, 'val', 'relative', preprocess)
-        run(relative_val_dataset, preprocess, args)
+        await run(relative_val_dataset, preprocess, args)
     elif args.mode == 'cirr_test':
         relative_test_dataset = CIRRDatasetV2(args.dataset_path, 'test', 'relative', preprocess)
-        run(relative_test_dataset, preprocess, args)
+        await run(relative_test_dataset, preprocess, args)
     elif args.mode == 'circo':
         relative_val_dataset = CIRCODatasetV2(args.dataset_path, 'val', 'relative', preprocess)
-        run(relative_val_dataset, preprocess, args)
+        await run(relative_val_dataset, preprocess, args)
     elif args.mode == 'circo_test':
         relative_test_dataset = CIRCODatasetV2(args.dataset_path, 'test', 'relative', preprocess)
-        run(relative_test_dataset, preprocess, args)
+        await run(relative_test_dataset, preprocess, args)
     else:
-        run(None, None, args)
+        await run(None, None, args)
 
-def run(dataset, preprocess, args):
+async def run(dataset, preprocess, args):
 
     dataset_stastic = {}
     device = torch.device(f'cuda')
@@ -130,20 +124,11 @@ def run(dataset, preprocess, args):
     # Compute the features
     idx = 0
     inst_id = 0
-    seed_idx = 0
-    idxx = 0
     for batch in tqdm(relative_val_loader):
-        breakpoint()
+
         if isinstance(batch, dict):
             reference_names = batch['reference_name']
             relative_captions = batch['relative_caption']
-            # if 'shared_concept' in batch:
-            #     # the shared concept between the reference and target images (useful to clarify ambiguities)
-            #     concept = batch['shared_concept']
-            #     target = []
-            # else:
-            #     concept = batch['multi_opt'][0]
-            #     target = batch['multi_gpt_opt'][0]
             concept = batch['multi_opt'][0]
             target = batch['multi_gpt_opt'][0]
             bsz = len(concept)
@@ -153,24 +138,14 @@ def run(dataset, preprocess, args):
             concept = None
             target = None
             bsz = 1
-        '''
-        (['281438'],                                                                                                                                  
-         ['has a higher quality and is taken during the daytime'],                                                                                    
-         ['a man sitting on an outdoor toilet'],                                                                                                      
-         [],                                                                                                                                          
-         1)
-        '''
 
-        for bs in range(bsz):
-            if bs != args.idx:
-                continue
+        async def run_one(bs):
+            # Keep same assertions as before to preserve behavior
+            assert reference_names is not None, "For layout generation, reference names must be provided in the dataset."
+            assert relative_captions is not None, "For layout generation, relative captions must be provided in the dataset."
+            assert concept is not None, "For layout generation, concept must be provided in the dataset."
+            assert target is not None, "For layout generation, target must be provided in the dataset."
             while True: # Generate util has a answer
-                random.seed(idx + bsz + args.start_idx + seed_idx)
-
-                assert reference_names is not None, "For layout generation, reference names must be provided in the dataset."
-                assert relative_captions is not None, "For layout generation, relative captions must be provided in the dataset."
-                assert concept is not None, "For layout generation, concept must be provided in the dataset."
-                assert target is not None, "For layout generation, target must be provided in the dataset."
                 if isinstance(concept[bs], tuple):
                     classes = [concept[bs][0]]
                 else:
@@ -183,15 +158,21 @@ def run(dataset, preprocess, args):
                     tar_ = target[bs]
                     rule = f'generating a image of {tar_}'
                 layout = []
-                flag, layout_info, messages_hash, question_id = llm_layout(args, classes, rule, scene, layout, refer, model, tokenizer, idx, dataset_stastic, prompt_system, examples, random = args.random_layout)
+                flag, layout_info, messages_hash, question_id = await llm_layout_async(args, classes, rule, scene, layout, refer, model, tokenizer, idx, dataset_stastic, prompt_system, examples)
 
                 if flag == True:
                     break
-                seed_idx = seed_idx + 1
+            
+            return layout_info, question_id
+        
+        tasks = [run_one(bs) for bs in range(bsz)]
+        results = await asyncio.gather(*tasks)
 
+        for bs, (layout_info, question_id) in enumerate(results):
             if 'pair_id' in batch.keys():
                 question_id = batch['pair_id'].tolist()[bs]
             else:
+                assert reference_names is not None, "For layout generation, reference names must be provided in the dataset."
                 question_id = reference_names[bs]
 
             idx = idx + 1
@@ -199,45 +180,14 @@ def run(dataset, preprocess, args):
                 continue
             inst_id = inst_id + 1
             
-            if args.visualize:
-                if not os.path.exists(args.visualize_path):
-                    os.makedirs(args.visualize_path)
-                image = np.ones((512,512,3),np.uint8) * 200
-                visualize_annotations(image, layout_info, caption = question_id, scontent = None, index = inst_id, step = 0, output_dir=args.visualize_path)
-                '''
-                [
-                    {
-                        'instance 1': 'man',
-                        'label': 'man wearing a tie, shirt, hat, and sunglasses',
-                        'cate': 'person',
-                        'desc': 'a man standing outdoors, wearing a suit, tie, hat, and sunglasses. he is positioned in the center of the scene, facing forward, with a casual posture. the hat is on his head, and the sunglasses are on his face, adding a touch of style to his attire.',
-                        'size': '4',
-                        'from': '1',
-                        'is_scene': False,
-                        'bbox': [0.2700221676410142, 0.2465232131707889, 0.7299778323589858, 0.8534767868292112],
-                        'ref': 'image'
-                    },
-                    {
-                        'label': 'a man wearing a suit, tie, hat, and sunglasses is standing in a park, surrounded by greenery and a few people enjoying the outdoors',
-                        'cate': 'a man wearing a suit, tie, hat, and sunglasses is standing in a park, surrounded by greenery and a few people enjoying the outdoors',
-                        'is_scene': True,
-                        'desc': 'a man wearing a suit, tie, hat, and sunglasses is standing in a park, surrounded by greenery and a few people enjoying the outdoors',
-                        'bbox': [0.0, 0.0, 1.0, 1.0],
-                        'ref': 'text',
-                        'size': 5
-                    }
-                ]'''
-                print(layout_info)
-
             layout_instance[question_id] = {
                 "layout": layout_info,
                 "name":question_id,
             }
-        idxx = idxx + 1
 
-    json_output_path = os.path.join(args.output_path, f'output_proxy_layout_{args.idx}.json')
+    json_output_path = os.path.join(args.output_path, f'output_proxy_layout_0.json')
     with open(json_output_path,'w') as f:
-        json.dump(layout_instance, f)
+        json.dump(layout_instance, f, indent=4)
     
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

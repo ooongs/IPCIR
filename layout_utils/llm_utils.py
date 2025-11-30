@@ -58,6 +58,12 @@ def load_model_llm(args, max_token = 4096, device = 'cuda'):
             }
         openai.Model.list()
         model = OpenAI_API(openai.api_key)
+    elif args.model_type == 'vllm_openai':
+        from openai import OpenAI
+        model = OpenAI(api_key="EMPTY", base_url="http://localhost:8000/v1")
+    elif args.model_type == 'vllm_openai_async':
+        from openai import AsyncOpenAI
+        model = AsyncOpenAI(api_key="EMPTY", base_url="http://localhost:8000/v1")
     elif args.model_type == 'qwen':
         tokenizer = AutoTokenizer.from_pretrained(args.llm_path, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(args.llm_path, device_map="auto", trust_remote_code=True).eval()
@@ -86,6 +92,13 @@ def apply_llm(args, messages, model, tokenizer, max_token = 4096):
             result = model.get_response(prompt, max_tokens=max_token)
             response = result['choices'][0]['message']['content']
             responses.append(response)
+        elif args.model_type == 'vllm_openai':
+            response = model.chat.completions.create(
+                model=os.environ.get('VLLM_MODEL_NAME', 'Qwen/Qwen1.5-32B-Chat'),
+                messages=prompt,
+                # temperature=0.0,
+            )
+            responses.append(response.choices[0].message.content)
         elif args.model_type == 'deepseek':
             response = model.chat.completions.create(
                 model="deepseek-chat",
@@ -115,6 +128,33 @@ def apply_llm(args, messages, model, tokenizer, max_token = 4096):
             responses.append(response)
     return responses
 
+async def apply_llm_async(args, messages, model, tokenizer, max_token = 4096):
+    responses = []
+    for prompt in messages:
+        if args.model_type == 'openai':
+            result = await model.get_response(prompt, max_tokens=max_token)
+            response = result['choices'][0]['message']['content']
+            responses.append(response)
+        elif args.model_type == 'vllm_openai':
+            raise ValueError("Please use the async version for vllm_openai. (vllm_openai_async)")
+        elif args.model_type == 'vllm_openai_async':
+            response = await model.chat.completions.create(
+                model=os.environ.get('VLLM_MODEL_NAME', 'Qwen/Qwen1.5-32B-Chat'),
+                messages=prompt,
+                # temperature=0.0,
+            )
+            responses.append(response.choices[0].message.content)
+        elif args.model_type == 'deepseek':
+            response = await model.chat.completions.create(
+                model="deepseek-chat",
+                messages=prompt,
+                stream=False
+            )
+            responses.append(response.choices[0].message.content)
+        elif args.model_type == 'qwen':
+            raise NotImplementedError("Qwen model async inference is not implemented yet.")
+    return responses
+
 def run_llm_inferene(args, model, tokenizer, inputs, prompt_system, examples):
     if isinstance(inputs, str):
         inputs = [inputs]
@@ -136,6 +176,16 @@ def llm_layout(args, classes, rule, scene, layout, refer, model, tokenizer, imag
     image_id = f"IPCIR_{messages_hash}_{image_idx}"
     return True, layout_info, messages_hash, image_id
 
+async def llm_layout_async(args, classes, rule, scene, layout, refer, model, tokenizer, image_idx, dataset_stastic, prompt_system, examples):
+    basic_layout_info = await get_advise_async(args, classes, rule, scene, layout, refer, model, tokenizer, prompt_system, examples)
+    if len(basic_layout_info) <2:
+        return False, None, None, None
+    layout_info = enrich_layout(basic_layout_info, dataset_stastic = dataset_stastic)
+        
+    messages_hash = hashlib.sha256(json.dumps(layout_info, sort_keys=True).encode('utf-8')).hexdigest()
+    image_id = f"IPCIR_{messages_hash}_{image_idx}"
+    return True, layout_info, messages_hash, image_id
+
 def generate_layout_random(args, classes, rule, scene, dataset_stastic):
     layout_info = get_random(args, classes, dataset_stastic, '')
     return layout_info
@@ -145,6 +195,62 @@ def get_advise(args, classes, rule, scene, layout, refer, model, tokenizer, prom
     instruction_input = get_simple_inputs(classes, rule = rule, scene = scene, Initial_Layout = layout, refer = refer)
     basic_input = [get_chat_prompt(prompt_system, instruction_input, examples)]
     reasoning_output = apply_llm(args, basic_input, model, tokenizer)
+
+    reasoning_info = reasoning_output[0].split('\n')
+    advise_info = [i.strip().lower() for i in reasoning_info if i!='' and '##' in i]
+    basic_layout_info = []
+    has_scene = False
+    final_scene = ''
+
+    for advise_ in advise_info:
+        instance = {}
+        advise_list = [i for i in advise_.split('[##') if i!='']
+
+        if len(advise_list) == 1 and 'scene' in advise_list[0]:
+            key_ = advise_list[0].split(':')[0].strip().lower()
+            value_ = advise_list[0].split(':')[-1].strip().lower().split('##]')[0].strip().lower()
+            value_ = value_.split('.')[0]
+            final_scene = value_
+        else:
+            for inst in advise_list:
+                key_ = inst.split(':')[0].strip().lower()
+                value_ = inst.split(':')[-1].strip().lower().split('##]')[0].strip().lower()
+                if 'bbox' in key_:
+                    try:
+                        bbox = []
+                        b_ = value_.split(',')
+                        for _ in b_:
+                            _ = float(_.strip().rstrip(";"))
+                            bbox.append(_)
+                        value_ = bbox
+                        area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+                        if area == 1.0:
+                            has_scene = True
+                            instance['is_scene'] = True
+                        else:
+                            instance['is_scene'] = False
+                    except:
+                        continue
+                elif key_ == 'from':
+                    if '0' in value_:
+                        instance['from'] = 0
+                    else:
+                        instance['from'] = 1
+                
+                instance[key_] = value_
+            if 'label' in instance and 'cate' in instance and 'desc' in instance and 'bbox' in instance and 'ref' in instance:
+                basic_layout_info.append(instance)
+            
+    if has_scene == False and final_scene!='':
+        basic_layout_info.append({'label':final_scene, 'cate':final_scene, 'is_scene':True, 'desc':final_scene,'bbox':[0.0,0.0,1.0,1.0],'ref':'text', 'size':5})
+    return basic_layout_info
+
+
+async def get_advise_async(args, classes, rule, scene, layout, refer, model, tokenizer, prompt_system, examples):
+
+    instruction_input = get_simple_inputs(classes, rule = rule, scene = scene, Initial_Layout = layout, refer = refer)
+    basic_input = [get_chat_prompt(prompt_system, instruction_input, examples)]
+    reasoning_output = await apply_llm_async(args, basic_input, model, tokenizer)
 
     reasoning_info = reasoning_output[0].split('\n')
     advise_info = [i.strip().lower() for i in reasoning_info if i!='' and '##' in i]

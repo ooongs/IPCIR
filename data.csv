@@ -1,0 +1,661 @@
+﻿Model,Inference Step,Scale,Results
+Flux,2,1,"Recall@5: 44.75
+Recall@10: 55.25
+Recall@25: 71.62
+Recall@50: 80.12
+
+mAP@5: 29.7
+mAP@10: 31.13
+mAP@25: 33.92
+mAP@50: 35.08
+
+mAP@10 results for each semantic aspect:
+Cardinality: 34.12
+Addition: 32.05
+Negation: 23.88
+Direct Addressing: 31.52
+Compare & Change: 28.13
+Comparative Statement: 30.04
+Statement with Conjunction: 29.72
+Spatial Relations & Background: 32.95
+Viewpoint: 24.28"
+Flux,2,0.9,"Recall@5: 45.62
+Recall@10: 57.5
+Recall@25: 73.38
+Recall@50: 81.25
+
+mAP@5: 31.23
+mAP@10: 32.54
+mAP@25: 35.32
+mAP@50: 36.46
+
+mAP@10 results for each semantic aspect:
+Cardinality: 35.7
+Addition: 33.33
+Negation: 25.51
+Direct Addressing: 33.34
+Compare & Change: 29.38
+Comparative Statement: 31.44
+Statement with Conjunction: 31.18
+Spatial Relations & Background: 34.52
+Viewpoint: 25.86"
+Flux,2,0.8,"Recall@5: 46.62
+Recall@10: 58.5
+Recall@25: 74.38
+Recall@50: 82.0
+
+mAP@5: 31.79
+mAP@10: 33.18
+mAP@25: 35.96
+mAP@50: 37.1
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.0
+Addition: 33.92
+Negation: 26.12
+Direct Addressing: 33.9
+Compare & Change: 30.48
+Comparative Statement: 31.81
+Statement with Conjunction: 31.92
+Spatial Relations & Background: 35.05
+Viewpoint: 26.67"
+Flux,2,0.7,"Recall@5: 47.88
+Recall@10: 58.88
+Recall@25: 74.12
+Recall@50: 82.62
+
+mAP@5: 32.53
+mAP@10: 33.76
+mAP@25: 36.52
+mAP@50: 37.66
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.5
+Addition: 34.47
+Negation: 26.94
+Direct Addressing: 34.48
+Compare & Change: 30.95
+Comparative Statement: 32.31
+Statement with Conjunction: 32.42
+Spatial Relations & Background: 35.49
+Viewpoint: 27.5"
+Flux,2,0.6,"Recall@5: 48.5
+Recall@10: 60.38
+Recall@25: 74.38
+Recall@50: 83.25
+
+mAP@5: 32.63
+mAP@10: 33.99
+mAP@25: 36.67
+mAP@50: 37.82
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.55
+Addition: 34.7
+Negation: 27.29
+Direct Addressing: 34.73
+Compare & Change: 31.31
+Comparative Statement: 32.83
+Statement with Conjunction: 32.66
+Spatial Relations & Background: 35.62
+Viewpoint: 27.69"
+Flux,2,0.5,"Recall@5: 48.38
+Recall@10: 61.25
+Recall@25: 74.38
+Recall@50: 83.12
+
+mAP@5: 32.5
+mAP@10: 33.83
+mAP@25: 36.53
+mAP@50: 37.67
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.38
+Addition: 34.45
+Negation: 27.45
+Direct Addressing: 34.61
+Compare & Change: 31.06
+Comparative Statement: 33.01
+Statement with Conjunction: 32.5
+Spatial Relations & Background: 35.27
+Viewpoint: 27.56"
+Flux,2,0.4,"Recall@5: 49.0
+Recall@10: 61.38
+Recall@25: 74.88
+Recall@50: 83.38
+
+mAP@5: 32.62
+mAP@10: 33.88
+mAP@25: 36.59
+mAP@50: 37.71
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.66
+Addition: 34.56
+Negation: 27.34
+Direct Addressing: 34.64
+Compare & Change: 31.14
+Comparative Statement: 33.1
+Statement with Conjunction: 32.58
+Spatial Relations & Background: 35.23
+Viewpoint: 27.73"
+Flux,2,0.3,"Recall@5: 48.62
+Recall@10: 61.5
+Recall@25: 75.0
+Recall@50: 83.38
+
+mAP@5: 32.71
+mAP@10: 33.92
+mAP@25: 36.61
+mAP@50: 37.71
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.61
+Addition: 34.75
+Negation: 27.5
+Direct Addressing: 34.76
+Compare & Change: 31.18
+Comparative Statement: 33.25
+Statement with Conjunction: 32.62
+Spatial Relations & Background: 35.31
+Viewpoint: 27.84"
+Flux,2,0.2,"Recall@5: 48.5
+Recall@10: 61.38
+Recall@25: 74.75
+Recall@50: 83.38
+
+mAP@5: 32.68
+mAP@10: 33.86
+mAP@25: 36.61
+mAP@50: 37.69
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.48
+Addition: 34.63
+Negation: 27.51
+Direct Addressing: 34.69
+Compare & Change: 31.17
+Comparative Statement: 33.19
+Statement with Conjunction: 32.53
+Spatial Relations & Background: 35.11
+Viewpoint: 27.78"
+Flux,2,0.1,"Recall@5: 48.25
+Recall@10: 61.38
+Recall@25: 74.5
+Recall@50: 83.38
+
+mAP@5: 32.71
+mAP@10: 33.83
+mAP@25: 36.56
+mAP@50: 37.66
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.1
+Addition: 34.62
+Negation: 27.34
+Direct Addressing: 34.68
+Compare & Change: 31.18
+Comparative Statement: 33.09
+Statement with Conjunction: 32.41
+Spatial Relations & Background: 34.85
+Viewpoint: 27.95"
+Flux,2,0,"Recall@5: 48.75
+Recall@10: 61.12
+Recall@25: 74.62
+Recall@50: 83.25
+
+mAP@5: 32.75
+mAP@10: 33.91
+mAP@25: 36.63
+mAP@50: 37.7
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.25
+Addition: 34.78
+Negation: 27.69
+Direct Addressing: 34.69
+Compare & Change: 31.19
+Comparative Statement: 33.42
+Statement with Conjunction: 32.51
+Spatial Relations & Background: 35.02
+Viewpoint: 28.07"
+Flux,1,1,"Recall@5: 44.75
+Recall@10: 55.25
+Recall@25: 71.62
+Recall@50: 80.12
+
+mAP@5: 29.7
+mAP@10: 31.13
+mAP@25: 33.92
+mAP@50: 35.08
+
+mAP@10 results for each semantic aspect:
+Cardinality: 34.12
+Addition: 32.05
+Negation: 23.88
+Direct Addressing: 31.52
+Compare & Change: 28.13
+Comparative Statement: 30.04
+Statement with Conjunction: 29.72
+Spatial Relations & Background: 32.95
+Viewpoint: 24.28"
+Flux,1,0.9,"Recall@5: 45.88
+Recall@10: 57.63
+Recall@25: 73.38
+Recall@50: 81.25
+
+mAP@5: 31.27
+mAP@10: 32.56
+mAP@25: 35.31
+mAP@50: 36.45
+
+mAP@10 results for each semantic aspect:
+Cardinality: 35.69
+Addition: 33.19
+Negation: 25.72
+Direct Addressing: 33.25
+Compare & Change: 29.56
+Comparative Statement: 31.23
+Statement with Conjunction: 31.19
+Spatial Relations & Background: 34.42
+Viewpoint: 25.97"
+Flux,1,0.8,"Recall@5: 46.62
+Recall@10: 58.75
+Recall@25: 74.0
+Recall@50: 81.88
+
+mAP@5: 31.86
+mAP@10: 33.3
+mAP@25: 36.03
+mAP@50: 37.16
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.05
+Addition: 33.98
+Negation: 26.18
+Direct Addressing: 34.02
+Compare & Change: 30.61
+Comparative Statement: 32.04
+Statement with Conjunction: 32.05
+Spatial Relations & Background: 35.14
+Viewpoint: 26.85"
+Flux,1,0.7,"Recall@5: 47.62
+Recall@10: 58.75
+Recall@25: 74.12
+Recall@50: 82.62
+
+mAP@5: 32.4
+mAP@10: 33.66
+mAP@25: 36.44
+mAP@50: 37.57
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.5
+Addition: 34.34
+Negation: 26.87
+Direct Addressing: 34.39
+Compare & Change: 30.95
+Comparative Statement: 32.41
+Statement with Conjunction: 32.4
+Spatial Relations & Background: 35.38
+Viewpoint: 27.48"
+Flux,1,0.6,"Recall@5: 48.12
+Recall@10: 60.12
+Recall@25: 74.0
+Recall@50: 83.12
+
+mAP@5: 32.61
+mAP@10: 33.91
+mAP@25: 36.59
+mAP@50: 37.72
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.15
+Addition: 34.75
+Negation: 27.16
+Direct Addressing: 34.64
+Compare & Change: 31.02
+Comparative Statement: 33.02
+Statement with Conjunction: 32.62
+Spatial Relations & Background: 35.52
+Viewpoint: 27.52"
+Flux,1,0.5,"Recall@5: 48.12
+Recall@10: 61.25
+Recall@25: 74.5
+Recall@50: 83.25
+
+mAP@5: 32.56
+mAP@10: 33.87
+mAP@25: 36.6
+mAP@50: 37.7
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.33
+Addition: 34.54
+Negation: 27.57
+Direct Addressing: 34.71
+Compare & Change: 30.98
+Comparative Statement: 33.2
+Statement with Conjunction: 32.54
+Spatial Relations & Background: 35.34
+Viewpoint: 27.58"
+Flux,1,0.4,"Recall@5: 48.5
+Recall@10: 61.25
+Recall@25: 74.75
+Recall@50: 83.38
+
+mAP@5: 32.65
+mAP@10: 33.93
+mAP@25: 36.64
+mAP@50: 37.76
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.51
+Addition: 34.7
+Negation: 27.52
+Direct Addressing: 34.72
+Compare & Change: 31.06
+Comparative Statement: 33.33
+Statement with Conjunction: 32.62
+Spatial Relations & Background: 35.46
+Viewpoint: 27.87"
+Flux,1,0.3,"Recall@5: 48.5
+Recall@10: 61.25
+Recall@25: 74.5
+Recall@50: 83.0
+
+mAP@5: 32.78
+mAP@10: 34.01
+mAP@25: 36.7
+mAP@50: 37.81
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.32
+Addition: 34.97
+Negation: 27.81
+Direct Addressing: 34.92
+Compare & Change: 31.23
+Comparative Statement: 33.49
+Statement with Conjunction: 32.73
+Spatial Relations & Background: 35.31
+Viewpoint: 28.12"
+Flux,1,0.2,"Recall@5: 48.75
+Recall@10: 61.25
+Recall@25: 74.38
+Recall@50: 83.0
+
+mAP@5: 32.73
+mAP@10: 33.91
+mAP@25: 36.63
+mAP@50: 37.73
+
+mAP@10 results for each semantic aspect:
+Cardinality: 36.82
+Addition: 34.83
+Negation: 27.3
+Direct Addressing: 34.84
+Compare & Change: 31.29
+Comparative Statement: 33.29
+Statement with Conjunction: 32.55
+Spatial Relations & Background: 35.18
+Viewpoint: 27.9"
+Flux,1,0.1,"Recall@5: 49.0
+Recall@10: 61.12
+Recall@25: 74.12
+Recall@50: 83.12
+
+mAP@5: 32.78
+mAP@10: 33.95
+mAP@25: 36.68
+mAP@50: 37.76
+
+mAP@10 results for each semantic aspect:
+Cardinality: 36.97
+Addition: 34.91
+Negation: 27.59
+Direct Addressing: 34.79
+Compare & Change: 31.33
+Comparative Statement: 33.19
+Statement with Conjunction: 32.51
+Spatial Relations & Background: 35.11
+Viewpoint: 27.57"
+Flux,1,0,"Recall@5: 48.88
+Recall@10: 61.12
+Recall@25: 74.5
+Recall@50: 83.0
+
+mAP@5: 32.65
+mAP@10: 33.87
+mAP@25: 36.61
+mAP@50: 37.69
+
+mAP@10 results for each semantic aspect:
+Cardinality: 36.84
+Addition: 34.66
+Negation: 27.61
+Direct Addressing: 34.66
+Compare & Change: 31.28
+Comparative Statement: 33.0
+Statement with Conjunction: 32.43
+Spatial Relations & Background: 34.94
+Viewpoint: 27.71"
+Flux,4,0,"Recall@5: 49.12
+Recall@10: 61.38
+Recall@25: 74.75
+Recall@50: 83.25
+
+mAP@5: 32.71
+mAP@10: 33.79
+mAP@25: 36.51
+mAP@50: 37.6
+
+mAP@10 results for each semantic aspect:
+Cardinality: 36.99
+Addition: 34.59
+Negation: 27.45
+Direct Addressing: 34.58
+Compare & Change: 31.12
+Comparative Statement: 33.26
+Statement with Conjunction: 32.45
+Spatial Relations & Background: 34.77
+Viewpoint: 28.02"
+Flux,4,0.1,"Recall@5: 48.88
+Recall@10: 61.12
+Recall@25: 74.75
+Recall@50: 83.38
+
+mAP@5: 32.72
+mAP@10: 33.82
+mAP@25: 36.57
+mAP@50: 37.67
+
+mAP@10 results for each semantic aspect:
+Cardinality: 36.84
+Addition: 34.75
+Negation: 27.22
+Direct Addressing: 34.64
+Compare & Change: 31.18
+Comparative Statement: 33.39
+Statement with Conjunction: 32.49
+Spatial Relations & Background: 34.89
+Viewpoint: 27.81"
+Flux,4,0.2,"Recall@5: 48.88
+Recall@10: 61.38
+Recall@25: 74.88
+Recall@50: 83.38
+
+mAP@5: 32.7
+mAP@10: 33.85
+mAP@25: 36.59
+mAP@50: 37.67
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.03
+Addition: 34.79
+Negation: 27.57
+Direct Addressing: 34.7
+Compare & Change: 31.18
+Comparative Statement: 33.41
+Statement with Conjunction: 32.55
+Spatial Relations & Background: 35.05
+Viewpoint: 27.88"
+Flux,4,0.3,"Recall@5: 48.62
+Recall@10: 61.25
+Recall@25: 75.0
+Recall@50: 83.25
+
+mAP@5: 32.75
+mAP@10: 33.95
+mAP@25: 36.68
+mAP@50: 37.76
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.35
+Addition: 34.83
+Negation: 27.35
+Direct Addressing: 34.83
+Compare & Change: 31.31
+Comparative Statement: 33.21
+Statement with Conjunction: 32.68
+Spatial Relations & Background: 35.28
+Viewpoint: 27.9"
+Flux,4,0.4,"Recall@5: 48.75
+Recall@10: 61.12
+Recall@25: 74.75
+Recall@50: 83.5
+
+mAP@5: 32.61
+mAP@10: 33.9
+mAP@25: 36.59
+mAP@50: 37.72
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.38
+Addition: 34.72
+Negation: 27.28
+Direct Addressing: 34.71
+Compare & Change: 31.09
+Comparative Statement: 33.13
+Statement with Conjunction: 32.64
+Spatial Relations & Background: 35.3
+Viewpoint: 27.76"
+Flux,4,0.5,"Recall@5: 48.5
+Recall@10: 61.0
+Recall@25: 74.62
+Recall@50: 83.12
+
+mAP@5: 32.49
+mAP@10: 33.87
+mAP@25: 36.6
+mAP@50: 37.72
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.78
+Addition: 34.51
+Negation: 27.28
+Direct Addressing: 34.79
+Compare & Change: 31.11
+Comparative Statement: 32.96
+Statement with Conjunction: 32.61
+Spatial Relations & Background: 35.33
+Viewpoint: 27.79"
+Flux,4,0.6,"Recall@5: 48.5
+Recall@10: 60.62
+Recall@25: 74.75
+Recall@50: 83.25
+
+mAP@5: 32.55
+mAP@10: 33.88
+mAP@25: 36.6
+mAP@50: 37.69
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.51
+Addition: 34.68
+Negation: 27.15
+Direct Addressing: 34.61
+Compare & Change: 31.05
+Comparative Statement: 32.65
+Statement with Conjunction: 32.57
+Spatial Relations & Background: 35.57
+Viewpoint: 27.43"
+Flux,4,0.7,"Recall@5: 47.75
+Recall@10: 59.0
+Recall@25: 74.38
+Recall@50: 82.75
+
+mAP@5: 32.42
+mAP@10: 33.65
+mAP@25: 36.41
+mAP@50: 37.55
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.35
+Addition: 34.28
+Negation: 26.87
+Direct Addressing: 34.47
+Compare & Change: 30.75
+Comparative Statement: 32.33
+Statement with Conjunction: 32.32
+Spatial Relations & Background: 35.38
+Viewpoint: 27.09"
+Flux,4,0.8,"Recall@5: 46.75
+Recall@10: 58.75
+Recall@25: 74.25
+Recall@50: 82.0
+
+mAP@5: 31.79
+mAP@10: 33.23
+mAP@25: 35.95
+mAP@50: 37.09
+
+mAP@10 results for each semantic aspect:
+Cardinality: 37.07
+Addition: 33.94
+Negation: 26.3
+Direct Addressing: 33.97
+Compare & Change: 30.54
+Comparative Statement: 31.86
+Statement with Conjunction: 31.96
+Spatial Relations & Background: 35.09
+Viewpoint: 26.81"
+Flux,4,0.9,"Recall@5: 45.75
+Recall@10: 57.63
+Recall@25: 73.38
+Recall@50: 81.25
+
+mAP@5: 31.21
+mAP@10: 32.55
+mAP@25: 35.3
+mAP@50: 36.45
+
+mAP@10 results for each semantic aspect:
+Cardinality: 35.66
+Addition: 33.32
+Negation: 25.54
+Direct Addressing: 33.33
+Compare & Change: 29.4
+Comparative Statement: 31.41
+Statement with Conjunction: 31.17
+Spatial Relations & Background: 34.54
+Viewpoint: 25.84"
+Flux,4,1,"Recall@5: 44.75
+Recall@10: 55.25
+Recall@25: 71.62
+Recall@50: 80.12
+
+mAP@5: 29.7
+mAP@10: 31.13
+mAP@25: 33.92
+mAP@50: 35.08
+
+mAP@10 results for each semantic aspect:
+Cardinality: 34.12
+Addition: 32.05
+Negation: 23.88
+Direct Addressing: 31.52
+Compare & Change: 28.13
+Comparative Statement: 30.04
+Statement with Conjunction: 29.72
+Spatial Relations & Background: 32.95
+Viewpoint: 24.28"

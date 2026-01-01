@@ -1,9 +1,10 @@
 """
-Test script to verify intermediate step saving with callback
-Based on flux.py
+Test script to verify intermediate step saving with callback for SDXL Base model
+Solution from: https://github.com/huggingface/diffusers/discussions/6810
 """
 import torch
-from diffusers import FluxPipeline, AutoPipelineForText2Image
+import numpy as np
+from diffusers import StableDiffusionXLPipeline
 from PIL import Image
 import os
 
@@ -11,11 +12,10 @@ import os
 class LatentSaverTest:
     """Test callback class to save intermediate latents at specific steps"""
 
-    def __init__(self, pipe, target_steps, output_dir, model_type='flux'):
+    def __init__(self, pipe, target_steps, output_dir):
         self.pipe = pipe
         self.target_steps = sorted(target_steps)
         self.output_dir = output_dir
-        self.model_type = model_type
         self.current_step = 0
         self.saved_images = {}
         os.makedirs(output_dir, exist_ok=True)
@@ -24,7 +24,7 @@ class LatentSaverTest:
         """Callback function called at the end of each step"""
         self.current_step = step_index + 1
 
-        print(f"Step {self.current_step}/{len(callback_kwargs.get('timesteps', []))}: timestep={timestep}")
+        print(f"Step {self.current_step}: timestep={timestep:.2f}")
 
         # Check if we should save this step
         if self.current_step in self.target_steps:
@@ -33,23 +33,29 @@ class LatentSaverTest:
 
             # Decode latent to image
             try:
-                if self.model_type == 'flux':
-                    # Flux: Different decoding process
-                    latents = self.pipe._unpack_latents(latents, 512, 512, self.pipe.vae_scale_factor)
-                    latents = (latents / self.pipe.vae.config.scaling_factor) + self.pipe.vae.config.shift_factor
-                    with torch.no_grad():
-                        image = self.pipe.vae.decode(latents).sample
-                elif self.model_type == 'sdxl':
-                    # SDXL: Scale latents before decoding
-                    latents = latents / self.pipe.vae.config.scaling_factor
-                    with torch.no_grad():
-                        image = self.pipe.vae.decode(latents).sample
+                # CRITICAL FIX: Check if VAE needs upcasting to FP32
+                needs_upcasting = self.pipe.vae.dtype == torch.float16 and self.pipe.vae.config.force_upcast
 
-                # Convert to PIL image
-                image = (image / 2 + 0.5).clamp(0, 1)
-                image = image.cpu().permute(0, 2, 3, 1).float().numpy()
-                image = (image * 255).round().astype("uint8")
-                pil_image = Image.fromarray(image[0])
+                if needs_upcasting:
+                    print(f"    Upcasting VAE to FP32 (fixes black image issue)")
+                    self.pipe.upcast_vae()
+
+                with torch.no_grad():
+                    # Convert latents to VAE's dtype
+                    latents = latents.to(next(iter(self.pipe.vae.post_quant_conv.parameters())).dtype)
+
+                    # Decode using the scaling factor
+                    image = self.pipe.vae.decode(latents / self.pipe.vae.config.scaling_factor, return_dict=False)[0]
+
+                    # Convert to PIL image
+                    image = (image / 2 + 0.5).clamp(0, 1)
+                    image = image.cpu().permute(0, 2, 3, 1).float().numpy()
+                    image = np.clip(image * 255, 0, 255).round().astype("uint8")
+                    pil_image = Image.fromarray(image[0])
+
+                    # Restore VAE dtype if it was upcasted
+                    if needs_upcasting:
+                        self.pipe.vae.to(dtype=torch.float16)
 
                 # Save image
                 save_path = os.path.join(self.output_dir, f'step_{self.current_step:02d}.png')
@@ -65,93 +71,47 @@ class LatentSaverTest:
         return callback_kwargs
 
 
-def test_flux():
-    """Test Flux model with intermediate step saving"""
-    print("=" * 80)
-    print("Testing FLUX model with intermediate step saving")
-    print("=" * 80)
-
-    model_path = "/home/jinzhenxiong/pretrain/black-forest-labs/FLUX.1-schnell"
-    output_dir = "./test_output/flux_multistep"
-
-    print(f"\nLoading Flux model from {model_path}...")
-    pipe = FluxPipeline.from_pretrained(model_path, torch_dtype=torch.bfloat16)
-    pipe.to("cuda")
-    pipe.set_progress_bar_config(disable=False)
-    print("✓ Model loaded")
-
-    prompt = "A cat holding a sign that says hello world"
-    target_steps = [1, 4, 8, 16, 32]
-    max_steps = 32
-
-    print(f"\nPrompt: {prompt}")
-    print(f"Max steps: {max_steps}")
-    print(f"Target steps to save: {target_steps}")
-
-    # Create callback
-    callback = LatentSaverTest(pipe, target_steps, output_dir, model_type='flux')
-
-    print("\nGenerating image with callback...")
-    image = pipe(
-        prompt,
-        guidance_scale=0.0,
-        num_inference_steps=max_steps,
-        max_sequence_length=256,
-        generator=torch.Generator("cpu").manual_seed(0),
-        callback_on_step_end=callback,
-        output_type="pil"
-    ).images[0]
-
-    # Save final image
-    final_path = os.path.join(output_dir, "final.png")
-    image.save(final_path)
-    print(f"\n✓ Final image saved to {final_path}")
-
-    print("\n" + "=" * 80)
-    print("Saved images:")
-    print("=" * 80)
-    for step, path in sorted(callback.saved_images.items()):
-        print(f"  Step {step:2d}: {path}")
-    print(f"  Final  : {final_path}")
-    print("=" * 80)
-
-
 def test_sdxl():
-    """Test SDXL model with intermediate step saving"""
+    """Test SDXL Base model with intermediate step saving"""
     print("=" * 80)
-    print("Testing SDXL model with intermediate step saving")
+    print("Testing SDXL Base model with intermediate step saving")
     print("=" * 80)
 
-    model_path = "/home/jinzhenxiong/temp/stabilityai/sdxl-turbo"
+    model_path = "/home/jinzhenxiong/pretrain/stabilityai/stable-diffusion-xl-base-1.0"
     output_dir = "./test_output/sdxl_multistep"
 
-    print(f"\nLoading SDXL model from {model_path}...")
-    pipe = AutoPipelineForText2Image.from_pretrained(
+    print(f"\nLoading SDXL Base model from {model_path}...")
+    pipe = StableDiffusionXLPipeline.from_pretrained(
         model_path,
         torch_dtype=torch.float16,
-        variant="fp16"
+        variant="fp16",
+        use_safetensors=True
     )
     pipe.to("cuda")
     pipe.set_progress_bar_config(disable=False)
     print("✓ Model loaded")
+    print(f"VAE dtype: {pipe.vae.dtype}")
+    print(f"VAE force_upcast: {pipe.vae.config.force_upcast}")
 
     prompt = "A cat holding a sign that says hello world"
-    target_steps = [1, 4, 8, 16, 32]
-    max_steps = 32
+    target_steps = [1, 4]
+    max_steps = 4
+    guidance_scale = 7.5
 
     print(f"\nPrompt: {prompt}")
     print(f"Max steps: {max_steps}")
+    print(f"Guidance scale: {guidance_scale}")
     print(f"Target steps to save: {target_steps}")
 
     # Create callback
-    callback = LatentSaverTest(pipe, target_steps, output_dir, model_type='sdxl')
+    callback = LatentSaverTest(pipe, target_steps, output_dir)
 
     print("\nGenerating image with callback...")
     image = pipe(
         prompt,
-        guidance_scale=0.0,
+        guidance_scale=guidance_scale,
         num_inference_steps=max_steps,
-        generator=torch.Generator("cpu").manual_seed(0),
+        generator=torch.Generator("cuda").manual_seed(0),
         callback_on_step_end=callback,
         output_type="pil"
     ).images[0]
@@ -171,20 +131,7 @@ def test_sdxl():
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Test intermediate step saving with callback")
-    parser.add_argument('--model', default='flux', choices=['flux', 'sdxl', 'both'],
-                       help='Which model to test (default: flux)')
-
-    args = parser.parse_args()
-
-    if args.model in ['flux', 'both']:
-        test_flux()
-        print("\n\n")
-
-    if args.model in ['sdxl', 'both']:
-        test_sdxl()
-        print("\n\n")
-
-    print("✅ Test completed!")
+    test_sdxl()
+    print("\n✅ Test completed!")
+    print("\nYou can view the generated images in: ./test_output/sdxl_multistep/")
+    print("Compare the images at different steps to see the denoising progression.")

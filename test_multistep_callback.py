@@ -94,8 +94,8 @@ def test_sdxl():
     print(f"VAE force_upcast: {pipe.vae.config.force_upcast}")
 
     prompt = "A cat holding a sign that says hello world"
-    target_steps = [1, 4]
-    max_steps = 4
+    target_steps = [1, 4, 8, 16, 32]
+    max_steps = 32
     guidance_scale = 7.5
 
     print(f"\nPrompt: {prompt}")

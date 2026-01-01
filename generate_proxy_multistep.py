@@ -4,7 +4,7 @@ import os
 import torch
 import time
 from tqdm import tqdm
-from diffusers import AutoPipelineForText2Image, FluxPipeline
+from diffusers import StableDiffusionXLPipeline
 from diffusers.utils import logging as diffusers_logging
 from collections import defaultdict
 from PIL import Image
@@ -14,31 +14,23 @@ diffusers_logging.disable_progress_bar()
 
 
 def load_sdxl_model(model_path, device='cuda'):
-    """Load SDXL model"""
+    """Load SDXL Base model"""
     import logging
     logging.getLogger("diffusers").setLevel(logging.ERROR)
 
-    pipe = AutoPipelineForText2Image.from_pretrained(
+    pipe = StableDiffusionXLPipeline.from_pretrained(
         model_path,
         torch_dtype=torch.float16,
-        variant="fp16"
+        variant="fp16",
+        use_safetensors=True
     )
     pipe.to(device)
     pipe.set_progress_bar_config(disable=True)
     return pipe
 
-def load_flux_model(model_path, device='cuda'):
-    """Load Flux model"""
-    import logging
-    logging.getLogger("diffusers").setLevel(logging.ERROR)
 
-    pipe = FluxPipeline.from_pretrained(model_path, torch_dtype=torch.bfloat16)
-    pipe.to(device)
-    pipe.set_progress_bar_config(disable=True)
-    return pipe
-
-def generate_images(pipe, prompt, num_images=1, num_inference_steps=1, guidance_scale=0.0):
-    """Generate images using model pipeline"""
+def generate_images(pipe, prompt, num_images=1, num_inference_steps=1, guidance_scale=7.5, seed=0):
+    """Generate images using SDXL pipeline"""
     images = []
     for i in range(num_images):
         image = pipe(
@@ -46,19 +38,18 @@ def generate_images(pipe, prompt, num_images=1, num_inference_steps=1, guidance_
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             output_type="pil",
-            generator=torch.Generator("cpu").manual_seed(i)
+            generator=torch.Generator("cuda").manual_seed(seed + i)
         ).images[0]
         images.append(image)
     return images
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate proxy images using SDXL with multiple inference steps.")
-    parser.add_argument('--model_type', default='sdxl', type=str, choices=['sdxl', 'flux'])
+    parser = argparse.ArgumentParser(description="Generate proxy images using SDXL Base with multiple inference steps.")
 
-    # Model paths
-    parser.add_argument('--sdxl_path', default='/home/jinzhenxiong/temp/stabilityai/sdxl-turbo', type=str)
-    parser.add_argument('--flux_path', default='/home/jinzhenxiong/pretrain/black-forest-labs/FLUX.1-schnell', type=str)
+    # Model path
+    parser.add_argument('--model_path', default='stabilityai/stable-diffusion-xl-base-1.0', type=str,
+                       help='Path to SDXL Base model')
 
     # Input/Output paths
     parser.add_argument('--json_file', default='./test1.json', type=str, help='Path to test1.json')
@@ -69,7 +60,7 @@ def main():
     parser.add_argument('--num_prompts', default=5, type=int, help='Number of prompts to use from multi_gpt-3.5_opt')
     parser.add_argument('--inference_steps', nargs='+', type=int, default=[1, 4, 8, 16, 32],
                         help='List of inference steps to use (default: 1 4 8 16 32)')
-    parser.add_argument('--guidance_scale', default=0.0, type=float)
+    parser.add_argument('--guidance_scale', default=7.5, type=float, help='Guidance scale for SDXL')
 
     # Multi-GPU settings
     parser.add_argument('--idx', default=0, type=int, help='GPU index')
@@ -84,14 +75,9 @@ def run(args):
     # Set device
     device = torch.device('cuda')
 
-    # Load model
-    print(f"Loading {args.model_type} model...")
-    if args.model_type == 'sdxl':
-        pipe = load_sdxl_model(args.sdxl_path, device=device)
-    elif args.model_type == 'flux':
-        pipe = load_flux_model(args.flux_path, device=device)
-    else:
-        raise ValueError(f"Invalid model type: {args.model_type}")
+    # Load SDXL Base model
+    print(f"Loading SDXL Base model from {args.model_path}...")
+    pipe = load_sdxl_model(args.model_path, device=device)
     print("Model loaded successfully!")
 
     # Load JSON data
@@ -124,7 +110,7 @@ def run(args):
         print(f"{'='*80}")
 
         # Create output directory for this step
-        output_dir = os.path.join(args.output_base_path, f'proxy_images_{args.model_type}_step{num_inference_steps}')
+        output_dir = os.path.join(args.output_base_path, f'proxy_images_sdxl_step{num_inference_steps}')
         combined_dir = os.path.join(output_dir, 'combined')
         os.makedirs(combined_dir, exist_ok=True)
 
@@ -191,7 +177,8 @@ def run(args):
                             prompt,
                             num_images=1,
                             num_inference_steps=num_inference_steps,
-                            guidance_scale=args.guidance_scale
+                            guidance_scale=args.guidance_scale,
+                            seed=img_idx
                         )
                         img_end_time = time.time()
 

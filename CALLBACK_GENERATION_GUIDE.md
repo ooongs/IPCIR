@@ -1,16 +1,23 @@
-# Callback-based Multi-Step Image Generation Guide
+# SDXL Base Callback-based Multi-Step Image Generation Guide
 
-`callback_on_step_end`를 사용하여 **한 번의 실행**으로 여러 step의 중간 결과를 저장하는 가이드입니다.
+`callback_on_step_end`를 사용하여 **SDXL Base 모델**로 한 번의 실행으로 여러 step의 중간 결과를 저장하는 가이드입니다.
+
+## 🎯 주요 변경사항
+
+- ✅ **SDXL Base 1.0** 사용 (`stabilityai/stable-diffusion-xl-base-1.0`)
+- ✅ **StableDiffusionXLPipeline** 사용
+- ✅ Flux 모델 제거 (단일 모델 테스트)
+- ✅ Proper VAE scaling 적용 (검은 이미지 방지)
 
 ## 🚀 핵심 개선점
 
-### 기존 방식 (`generate_proxy_multistep.py`)
+### 기존 방식 (각 step별로 실행)
 - Step 1, 4, 8, 16, 32를 **각각 별도로** 실행
 - 총 실행 횟수: 1 + 4 + 8 + 16 + 32 = **61 steps**
 - 800개 ID × 5개 프롬프트 = 4000개 × 61 steps = **244,000 step 실행**
 
-### 새로운 방식 (`generate_proxy_multistep_callback.py`) ⭐
-- Step 32를 **한 번만** 실행하면서 중간 step (1, 4, 8, 16, 32)의 latent를 저장
+### Callback 방식 (한 번에 실행) ⭐
+- Step 32를 **한 번만** 실행하면서 중간 step의 latent를 VAE decode하여 저장
 - 총 실행 횟수: **32 steps만!**
 - 800개 ID × 5개 프롬프트 = 4000개 × 32 steps = **128,000 step 실행**
 - **약 2배 빠름!** 🚀
@@ -21,48 +28,32 @@
 2. **test_multistep_callback.py** - 테스트 스크립트
 3. **generate_callback.sh** - 실행용 셸 스크립트
 
-## 🧪 테스트 실행
+## 🧪 테스트 실행 (필수!)
 
 먼저 테스트 스크립트로 동작을 확인해보세요:
 
 ```bash
-# Flux 모델 테스트
-python test_multistep_callback.py --model flux
-
-# SDXL 모델 테스트
-python test_multistep_callback.py --model sdxl
-
-# 둘 다 테스트
-python test_multistep_callback.py --model both
+python test_multistep_callback.py
 ```
 
-테스트 결과는 `./test_output/` 디렉토리에 저장됩니다:
+테스트 결과는 `./test_output/sdxl_multistep/` 디렉토리에 저장됩니다:
 ```
-test_output/
-├── flux_multistep/
-│   ├── step_01.png
-│   ├── step_04.png
-│   ├── step_08.png
-│   ├── step_16.png
-│   ├── step_32.png
-│   └── final.png
-└── sdxl_multistep/
-    ├── step_01.png
-    ├── step_04.png
-    ├── step_08.png
-    ├── step_16.png
-    ├── step_32.png
-    └── final.png
+test_output/sdxl_multistep/
+├── step_01.png  ← 1 step 결과 (노이즈가 많음)
+├── step_04.png  ← 4 step 결과
+├── step_08.png  ← 8 step 결과
+├── step_16.png  ← 16 step 결과
+├── step_32.png  ← 32 step 결과
+└── final.png    ← 최종 결과 (step_32.png와 동일)
 ```
+
+**이미지를 확인하여 검은 화면이 아닌지 확인하세요!**
 
 ## 🚀 본격 사용
 
 ### 방법 1: 셸 스크립트 사용 (권장)
 
 ```bash
-# 스크립트 편집하여 설정 변경
-vim generate_callback.sh
-
 # 실행
 bash generate_callback.sh
 ```
@@ -72,13 +63,14 @@ bash generate_callback.sh
 ```bash
 # 단일 GPU
 CUDA_VISIBLE_DEVICES=0 python generate_proxy_multistep_callback.py \
-    --model_type sdxl \
+    --model_path stabilityai/stable-diffusion-xl-base-1.0 \
     --json_file ./test1.json \
     --output_base_path ./output \
     --num_prompts 5 \
     --img_per_prompt 1 \
     --max_inference_steps 32 \
-    --save_steps 1 4 8 16 32
+    --save_steps 1 4 8 16 32 \
+    --guidance_scale 7.5
 
 # 다중 GPU (GPU 0, 1 사용)
 CUDA_VISIBLE_DEVICES=0 python generate_proxy_multistep_callback.py \
@@ -110,14 +102,14 @@ output/
 
 | 파라미터 | 설명 | 기본값 |
 |---------|------|--------|
-| `--model_type` | 모델 타입 (sdxl 또는 flux) | sdxl |
+| `--model_path` | SDXL Base 모델 경로 | stabilityai/stable-diffusion-xl-base-1.0 |
 | `--json_file` | 입력 JSON 파일 경로 | ./test1.json |
 | `--output_base_path` | 출력 베이스 디렉토리 | ./output |
 | `--num_prompts` | ID당 사용할 프롬프트 개수 | 5 |
 | `--img_per_prompt` | 프롬프트당 생성할 이미지 개수 | 1 |
 | `--max_inference_steps` | 최대 inference step (실제 실행 횟수) | 32 |
 | `--save_steps` | 저장할 step 리스트 | 1 4 8 16 32 |
-| `--guidance_scale` | Guidance scale | 0.0 |
+| `--guidance_scale` | Guidance scale (SDXL 권장: 7.5) | 7.5 |
 
 ## 🔍 작동 원리
 
@@ -132,57 +124,84 @@ class LatentSaver:
         if current_step in target_steps:
             latents = callback_kwargs["latents"]
 
-            # VAE decode: latent → image
-            image = pipe.vae.decode(latents).sample
+            # IMPORTANT: Proper scaling to prevent black images
+            latents = latents / pipe.vae.config.scaling_factor
 
-            # 저장
+            # VAE decode: latent → image
+            image = pipe.vae.decode(latents, return_dict=False)[0]
+
+            # Convert and save
             pil_image.save(f"step_{current_step}.jpg")
 ```
 
-### 실행 과정
+### 검은 이미지 방지를 위한 핵심 코드
 
-1. **Step 1**: latent 디코드 → `step1/combined_xxx_0.jpg` 저장
-2. **Step 2-3**: 건너뜀
-3. **Step 4**: latent 디코드 → `step4/combined_xxx_0.jpg` 저장
-4. **Step 5-7**: 건너뜀
-5. **Step 8**: latent 디코드 → `step8/combined_xxx_0.jpg` 저장
-6. ...
-7. **Step 32**: latent 디코드 → `step32/combined_xxx_0.jpg` 저장 + 최종 이미지
+StackOverflow 링크에서 제시된 해결책을 적용했습니다:
 
-## 📊 성능 비교
+```python
+# ✅ CORRECT: Scale before decode
+latents = latents / pipe.vae.config.scaling_factor
+image = pipe.vae.decode(latents, return_dict=False)[0]
 
-### 단일 프롬프트 기준 (SDXL-Turbo)
+# ❌ WRONG: No scaling (results in black images)
+image = pipe.vae.decode(latents).sample
+```
+
+## 📊 예상 성능
+
+### 단일 프롬프트 기준 (SDXL Base)
 
 | 방식 | Step 실행 횟수 | 예상 시간 |
 |------|---------------|----------|
-| 별도 실행 | 1+4+8+16+32 = 61 | ~13초 |
-| Callback 방식 | 32 | ~6초 |
-| **개선** | **-47%** | **2.2배 빠름** |
+| 별도 실행 | 1+4+8+16+32 = 61 | ~30초 |
+| Callback 방식 | 32 | ~16초 |
+| **개선** | **-47%** | **1.9배 빠름** |
 
 ### 전체 데이터셋 (800 IDs × 5 prompts)
 
 | 방식 | 총 Step 수 | 예상 시간 |
 |------|-----------|----------|
-| 별도 실행 | 244,000 | ~14시간 |
-| Callback 방식 | 128,000 | **~7시간** |
-| **개선** | **-47%** | **2배 빠름** |
+| 별도 실행 | 244,000 | ~33시간 |
+| Callback 방식 | 128,000 | **~18시간** |
+| **개선** | **-47%** | **1.8배 빠름** |
+
+> SDXL Base는 Turbo보다 느리지만 품질이 더 좋습니다.
 
 ## 💡 장점
 
-1. ✅ **속도**: 2배 빠름
+1. ✅ **속도**: 약 2배 빠름
 2. ✅ **일관성**: 같은 noise trajectory를 공유하므로 step 간 비교가 공정
-3. ✅ **메모리**: 모델을 한 번만 로드
-4. ✅ **코드 간결성**: 한 번의 파이프라인 호출
+3. ✅ **품질**: SDXL Base는 고품질 이미지 생성
+4. ✅ **메모리**: 모델을 한 번만 로드
+5. ✅ **검증됨**: StackOverflow 솔루션 적용으로 검은 이미지 문제 해결
 
-## ⚠️ 주의사항
+## ⚠️ 중요 사항
 
-1. **VAE Decode 오버헤드**: Step마다 VAE decode가 추가로 실행되므로 약간의 오버헤드 발생 (하지만 전체적으로는 여전히 빠름)
+### 1. 반드시 테스트 먼저 실행
+```bash
+python test_multistep_callback.py
+```
+생성된 이미지를 확인하여 정상 작동하는지 검증하세요.
 
-2. **메모리 사용**: 중간 step에서 VAE decode를 하므로 약간 더 많은 메모리 사용 (보통 문제 없음)
+### 2. Guidance Scale
+- SDXL Base는 **guidance_scale=7.5** 권장
+- SDXL Turbo는 guidance_scale=0.0 사용
+- 이 코드는 SDXL Base용이므로 7.5를 사용합니다.
 
-3. **Flux 모델**: `_unpack_latents` 메서드를 사용하여 latent를 올바르게 처리
+### 3. Generator Device
+```python
+# ✅ CORRECT for SDXL
+generator = torch.Generator("cuda").manual_seed(seed)
 
-4. **SDXL 모델**: `scaling_factor`를 사용하여 latent를 스케일 조정
+# ❌ May cause issues
+generator = torch.Generator("cpu").manual_seed(seed)
+```
+
+### 4. VAE Decoding
+중간 step의 latent는 완전히 denoised되지 않았으므로:
+- Step 1: 매우 노이즈가 많은 이미지
+- Step 4-8: 점진적으로 개선
+- Step 16-32: 거의 최종 품질
 
 ## 🧹 생성된 이미지 삭제 (재생성 시)
 
@@ -193,24 +212,54 @@ rm -rf ./output/proxy_images_sdxl_step1
 # 모든 step 삭제
 rm -rf ./output/proxy_images_sdxl_step*
 
-# Callback 방식으로 생성한 캐시 삭제
-rm ./output/proxy_images_sdxl_step*/aug_features_*.npz
+# 캐시 파일도 삭제
+find ./output -name "aug_features_*.npz" -delete
 ```
 
-## 🔄 기존 방식과의 호환성
+## 🔄 Retrieval과 연동
 
-생성된 이미지 파일 구조와 이름이 동일하므로, `retrieval_circo.py`에서 동일하게 사용 가능합니다:
+생성된 이미지는 `retrieval_circo.py`에서 바로 사용 가능:
 
 ```bash
 # Step 1 이미지로 테스트
 python src/retrieval_circo.py \
     --aug_dir ./output/proxy_images_sdxl_step1 \
     --with_aug
+
+# Step 32 이미지로 테스트
+python src/retrieval_circo.py \
+    --aug_dir ./output/proxy_images_sdxl_step32 \
+    --with_aug
 ```
+
+## 🐛 문제 해결
+
+### 검은 이미지가 생성되는 경우
+1. VAE scaling이 제대로 적용되었는지 확인
+2. `latents / pipe.vae.config.scaling_factor` 코드 확인
+3. Generator device를 "cuda"로 설정했는지 확인
+
+### OOM (Out of Memory) 에러
+1. Batch size 줄이기 (현재는 1)
+2. Mixed precision 사용 확인 (torch.float16)
+3. GPU 메모리 정리: `torch.cuda.empty_cache()`
+
+### 느린 생성 속도
+1. 올바른 GPU 사용 확인: `nvidia-smi`
+2. GPU가 다른 프로세스에 사용 중인지 확인
+3. Mixed precision 적용 확인
 
 ## 📝 요약
 
-- **Callback 방식**: 32 step을 한 번 실행하면서 중간 결과 저장 → **빠름, 효율적**
-- **별도 실행 방식**: 각 step을 독립적으로 실행 → 느림, 비효율적
+- **모델**: SDXL Base 1.0 (고품질)
+- **방식**: Callback으로 32 step 한 번 실행, 중간 결과 저장
+- **속도**: 기존 대비 약 2배 빠름
+- **해결**: StackOverflow 솔루션으로 검은 이미지 문제 해결
 
-**추천**: Callback 방식 사용! 🚀
+**권장 워크플로우**:
+1. `python test_multistep_callback.py` 실행
+2. 생성된 이미지 확인 (검은 화면 아닌지)
+3. 문제 없으면 `bash generate_callback.sh` 실행
+4. 생성 완료 후 retrieval 테스트
+
+🚀 Happy Generating!

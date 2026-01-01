@@ -2,9 +2,10 @@ import argparse
 import json
 import os
 import torch
+import numpy as np
 import time
 from tqdm import tqdm
-from diffusers import AutoPipelineForText2Image, FluxPipeline
+from diffusers import StableDiffusionXLPipeline
 from diffusers.utils import logging as diffusers_logging
 from collections import defaultdict
 from PIL import Image
@@ -14,41 +15,32 @@ diffusers_logging.disable_progress_bar()
 
 
 def load_sdxl_model(model_path, device='cuda'):
-    """Load SDXL model"""
+    """Load SDXL Base model"""
     import logging
     logging.getLogger("diffusers").setLevel(logging.ERROR)
 
-    pipe = AutoPipelineForText2Image.from_pretrained(
+    pipe = StableDiffusionXLPipeline.from_pretrained(
         model_path,
         torch_dtype=torch.float16,
-        variant="fp16"
+        variant="fp16",
+        use_safetensors=True
     )
     pipe.to(device)
     pipe.set_progress_bar_config(disable=True)
     return pipe
 
 
-def load_flux_model(model_path, device='cuda'):
-    """Load Flux model"""
-    import logging
-    logging.getLogger("diffusers").setLevel(logging.ERROR)
-
-    pipe = FluxPipeline.from_pretrained(model_path, torch_dtype=torch.bfloat16)
-    pipe.to(device)
-    pipe.set_progress_bar_config(disable=True)
-    return pipe
-
-
 class LatentSaver:
-    """Callback class to save intermediate latents at specific steps"""
+    """Callback class to save intermediate latents at specific steps
+    Solution from: https://github.com/huggingface/diffusers/discussions/6810
+    """
 
-    def __init__(self, pipe, target_steps, output_dirs, img_id, curr_count, model_type='sdxl'):
+    def __init__(self, pipe, target_steps, output_dirs, img_id, curr_count):
         self.pipe = pipe
         self.target_steps = sorted(target_steps)
         self.output_dirs = output_dirs
         self.img_id = img_id
         self.curr_count = curr_count
-        self.model_type = model_type
         self.current_step = 0
         self.saved_steps = []
 
@@ -60,24 +52,29 @@ class LatentSaver:
         if self.current_step in self.target_steps:
             latents = callback_kwargs["latents"]
 
-            # Decode latent to image
-            if self.model_type == 'sdxl':
-                # SDXL: Scale latents before decoding
-                latents = latents / self.pipe.vae.config.scaling_factor
-                with torch.no_grad():
-                    image = self.pipe.vae.decode(latents).sample
-            elif self.model_type == 'flux':
-                # Flux: Different decoding process
-                latents = self.pipe._unpack_latents(latents, 512, 512, self.pipe.vae_scale_factor)
-                latents = (latents / self.pipe.vae.config.scaling_factor) + self.pipe.vae.config.shift_factor
-                with torch.no_grad():
-                    image = self.pipe.vae.decode(latents).sample
+            # CRITICAL FIX: Check if VAE needs upcasting to FP32
+            # This fixes the black image issue with SDXL VAE in FP16
+            needs_upcasting = self.pipe.vae.dtype == torch.float16 and self.pipe.vae.config.force_upcast
 
-            # Convert to PIL image
-            image = (image / 2 + 0.5).clamp(0, 1)
-            image = image.cpu().permute(0, 2, 3, 1).float().numpy()
-            image = (image * 255).round().astype("uint8")
-            pil_image = Image.fromarray(image[0])
+            if needs_upcasting:
+                self.pipe.upcast_vae()
+
+            with torch.no_grad():
+                # Convert latents to VAE's dtype
+                latents = latents.to(next(iter(self.pipe.vae.post_quant_conv.parameters())).dtype)
+
+                # Decode using the scaling factor
+                image = self.pipe.vae.decode(latents / self.pipe.vae.config.scaling_factor, return_dict=False)[0]
+
+                # Convert to PIL image
+                image = (image / 2 + 0.5).clamp(0, 1)
+                image = image.cpu().permute(0, 2, 3, 1).float().numpy()
+                image = np.clip(image * 255, 0, 255).round().astype("uint8")
+                pil_image = Image.fromarray(image[0])
+
+                # Restore VAE dtype if it was upcasted
+                if needs_upcasting:
+                    self.pipe.vae.to(dtype=torch.float16)
 
             # Save image
             output_dir = self.output_dirs[self.current_step]
@@ -89,45 +86,33 @@ class LatentSaver:
 
 
 def generate_images_with_callback(pipe, prompt, target_steps, output_dirs, img_id, curr_count,
-                                  max_steps=32, guidance_scale=0.0, model_type='sdxl', seed=0):
+                                  max_steps=32, guidance_scale=7.5, seed=0):
     """Generate images and save intermediate steps using callback"""
 
     # Create callback
-    callback = LatentSaver(pipe, target_steps, output_dirs, img_id, curr_count, model_type)
+    callback = LatentSaver(pipe, target_steps, output_dirs, img_id, curr_count)
 
     # Generate with callback
-    generator = torch.Generator("cpu").manual_seed(seed)
+    generator = torch.Generator("cuda").manual_seed(seed)
 
-    if model_type == 'flux':
-        output = pipe(
-            prompt=prompt,
-            num_inference_steps=max_steps,
-            guidance_scale=guidance_scale,
-            output_type="pil",
-            generator=generator,
-            callback_on_step_end=callback,
-            max_sequence_length=256
-        )
-    else:  # sdxl
-        output = pipe(
-            prompt=prompt,
-            num_inference_steps=max_steps,
-            guidance_scale=guidance_scale,
-            output_type="pil",
-            generator=generator,
-            callback_on_step_end=callback
-        )
+    output = pipe(
+        prompt=prompt,
+        num_inference_steps=max_steps,
+        guidance_scale=guidance_scale,
+        output_type="pil",
+        generator=generator,
+        callback_on_step_end=callback
+    )
 
     return output.images[0], callback.saved_steps
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate proxy images with intermediate steps using callback.")
-    parser.add_argument('--model_type', default='sdxl', type=str, choices=['sdxl', 'flux'])
+    parser = argparse.ArgumentParser(description="Generate proxy images with intermediate steps using SDXL Base.")
 
-    # Model paths
-    parser.add_argument('--sdxl_path', default='/home/jinzhenxiong/temp/stabilityai/sdxl-turbo', type=str)
-    parser.add_argument('--flux_path', default='/home/jinzhenxiong/pretrain/black-forest-labs/FLUX.1-schnell', type=str)
+    # Model path
+    parser.add_argument('--model_path', default='stabilityai/stable-diffusion-xl-base-1.0', type=str,
+                       help='Path to SDXL Base model')
 
     # Input/Output paths
     parser.add_argument('--json_file', default='./test1.json', type=str, help='Path to test1.json')
@@ -139,7 +124,7 @@ def main():
     parser.add_argument('--max_inference_steps', default=32, type=int, help='Maximum inference steps')
     parser.add_argument('--save_steps', nargs='+', type=int, default=[1, 4, 8, 16, 32],
                         help='Steps at which to save intermediate results (default: 1 4 8 16 32)')
-    parser.add_argument('--guidance_scale', default=0.0, type=float)
+    parser.add_argument('--guidance_scale', default=7.5, type=float, help='Guidance scale for SDXL')
 
     # Multi-GPU settings
     parser.add_argument('--idx', default=0, type=int, help='GPU index')
@@ -154,14 +139,9 @@ def run(args):
     # Set device
     device = torch.device('cuda')
 
-    # Load model
-    print(f"Loading {args.model_type} model...")
-    if args.model_type == 'sdxl':
-        pipe = load_sdxl_model(args.sdxl_path, device=device)
-    elif args.model_type == 'flux':
-        pipe = load_flux_model(args.flux_path, device=device)
-    else:
-        raise ValueError(f"Invalid model type: {args.model_type}")
+    # Load SDXL Base model
+    print(f"Loading SDXL Base model from {args.model_path}...")
+    pipe = load_sdxl_model(args.model_path, device=device)
     print("Model loaded successfully!")
 
     # Load JSON data
@@ -171,7 +151,7 @@ def run(args):
     # Create output directories for each target step
     output_dirs = {}
     for step in args.save_steps:
-        output_dir = os.path.join(args.output_base_path, f'proxy_images_{args.model_type}_step{step}')
+        output_dir = os.path.join(args.output_base_path, f'proxy_images_sdxl_step{step}')
         combined_dir = os.path.join(output_dir, 'combined')
         os.makedirs(combined_dir, exist_ok=True)
         output_dirs[step] = combined_dir
@@ -204,6 +184,7 @@ def run(args):
     print("=" * 80)
     print(f"GPU {args.idx}: Processing items {start_idx} to {end_idx-1} ({len(items_to_process)} items)")
     print(f"Max inference steps: {args.max_inference_steps}")
+    print(f"Guidance scale: {args.guidance_scale}")
     print(f"Saving at steps: {args.save_steps}")
     print(f"Target per step: {args.num_prompts} prompts x {args.img_per_prompt} images = {args.num_prompts * args.img_per_prompt} images per ID")
     print("=" * 80)
@@ -279,7 +260,6 @@ def run(args):
                         curr_count=curr_count,
                         max_steps=args.max_inference_steps,
                         guidance_scale=args.guidance_scale,
-                        model_type=args.model_type,
                         seed=img_idx
                     )
 

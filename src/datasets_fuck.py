@@ -638,7 +638,9 @@ class CIRCODatasetV2(Dataset):
 
             multi_opt = self.read_from_annotation(self.annotations[index], 'multi_caption_opt')
             multi_gpt_opt = self.read_from_annotation(self.annotations[index], 'multi_gpt-3.5_opt')
-            
+            self_consistent_opt = self.annotations[index].get('self_consistent_opt', "")
+            if not self_consistent_opt:
+                print(f"self_consistent_opt not found for index {index}")
 
             if self.split == 'val':
                 # Get the target image and ground truth images
@@ -660,7 +662,8 @@ class CIRCODatasetV2(Dataset):
                     'gt_img_ids': gt_img_ids,
                     'query_id': query_id,
                     'multi_opt': multi_opt,
-                    'multi_gpt_opt': multi_gpt_opt #multi_gpt4_opt# multi_gpt_opt,
+                    'multi_gpt_opt': multi_gpt_opt, #multi_gpt4_opt# multi_gpt_opt,
+                    'self_consistent_opt': self_consistent_opt
                 }
 
             elif self.split == 'test':
@@ -671,7 +674,8 @@ class CIRCODatasetV2(Dataset):
                     'shared_concept': shared_concept,
                     'query_id': query_id,
                     'multi_opt': multi_opt,
-                    'multi_gpt_opt': multi_gpt_opt# multi_gpt4_opt #multi_gpt_opt,
+                    'multi_gpt_opt': multi_gpt_opt,# multi_gpt4_opt #multi_gpt_opt,
+                    'self_consistent_opt': self_consistent_opt
                 }
 
         elif self.mode == 'classic':

@@ -6,7 +6,7 @@ import yaml
 import random
 from diffusers.utils.import_utils import is_accelerate_available
 from transformers import CLIPTextModel, CLIPTokenizer
-from migc.migc_pipeline import StableDiffusionMIGCPipeline, MIGCProcessor, AttentionStore
+from MIGC.migc.migc_pipeline import StableDiffusionMIGCPipeline, MIGCProcessor, AttentionStore
 from diffusers import EulerDiscreteScheduler
 if is_accelerate_available():
     from accelerate import init_empty_weights
@@ -119,9 +119,11 @@ def load_migc(unet, attention_store, pretrained_MIGC_path: Union[str, Dict[str, 
 
 def offlinePipelineSetupWithSafeTensor(sd_safetensors_path):
     project_dir = os.path.dirname(os.path.dirname(__file__))
-    migc_ckpt_path = os.path.join(project_dir, '/home/llq/WorkSpace/code/Course/VL/Imagine-and-Seek/weights/MIGC_SD14.ckpt')
-    clip_model_path = os.path.join(project_dir, '/mnt/data2/liyou/ckpt/sd1_5/text_encoder')
-    clip_tokenizer_path = os.path.join(project_dir, '/mnt/data2/liyou/ckpt/sd1_5/tokenizer')
+    migc_ckpt_path = os.path.join(project_dir, 'pretrained_weights/MIGC_SD14.ckpt')
+    # clip_model_path = os.path.join(project_dir, 'migc_gui_weights/clip/text_encoder')
+    # clip_tokenizer_path = os.path.join(project_dir, 'migc_gui_weights/clip/tokenizer')
+    clip_model_path = 'openai/clip-vit-large-patch14'
+    clip_tokenizer_path = 'openai/clip-vit-large-patch14'
     original_config_file = os.path.join(project_dir, 'migc_gui_weights/v1-inference.yaml')
     ctx = init_empty_weights if is_accelerate_available() else nullcontext
     with ctx():
@@ -135,7 +137,7 @@ def offlinePipelineSetupWithSafeTensor(sd_safetensors_path):
                                                     load_safety_checker=False)
     print('Initializing pipeline')
     pipe.attention_store = AttentionStore()
-    from migc.migc_utils import load_migc
+    from MIGC.migc.migc_utils import load_migc
     load_migc(pipe.unet , pipe.attention_store,
             migc_ckpt_path, attn_processor=MIGCProcessor)
 

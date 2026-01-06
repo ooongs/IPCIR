@@ -48,7 +48,7 @@ from transformers.models.clip.modeling_clip import CLIP_TEXT_INPUTS_DOCSTRING
 from typing import Optional, Tuple, Union
 from transformers import CLIPTextModel, CLIPTokenizer, CLIPVisionModel
 from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel, LMSDiscreteScheduler
-from migc.migc_arch import MIGC, NaiveFuser
+from MIGC.migc.migc_arch import MIGC, NaiveFuser
 import copy
 from pycocotools import mask as mask_utils
 import os
@@ -676,7 +676,8 @@ def equip_elite_mapper( device, mapper_model_path, mapper_local_model_path, pipe
 
     mapper_local = MapperLocal(input_dim=1024, output_dim=768)
 
-    image_encoder = CLIPVisionModel.from_pretrained("openai/clip-vit-large-patch14")
+    clip_path = os.environ.get('CLIP_PATH', 'openai/clip-vit-large-patch14')
+    image_encoder = CLIPVisionModel.from_pretrained(clip_path)
 
     for _name, _module in pipe.unet.named_modules():
         
@@ -786,7 +787,7 @@ def main():
     ####### arguments for migc
     parser.add_argument('--sample_image',default=True,type=bool)
     parser.add_argument('--migc_ckpt_path',default = './weights/MIGC_SD14.ckpt',type=str)
-    parser.add_argument('--sd1x_path',default = './weights/realisticVisionV60B1_v60B1VAE.safetensors',type = str)
+    parser.add_argument('--sd1x_path',default = '/home/llq/WorkSpace/code/Course/VL/Imagine-and-Seek/weights/realisticVisionV60B1_v60B1InpaintingVAE.safetensors',type = str)
     parser.add_argument("--aug_phase_with_and", type=bool,default=False)
     parser.add_argument("--NaiveFuserSteps", type=int, default=50)
     parser.add_argument("--guidance_scale", type=float, default=7.5)

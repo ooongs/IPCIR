@@ -29,7 +29,7 @@ import argparse
 import yaml
 import cv2
 import math
-from migc.migc_arch import MIGC, NaiveFuser
+from MIGC.migc.migc_arch import MIGC, NaiveFuser
 
 
 logger = logging.get_logger(__name__)

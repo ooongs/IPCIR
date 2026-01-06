@@ -1,31 +1,13 @@
 import argparse
 import asyncio
 import json
-import logging
-import re
 from tqdm import tqdm
 from enum_definitions import *
 from data_definitions import *
-from typing import Iterator
-import yaml
-import transformers
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
-import numpy as np
 import clip
-
-from torch.utils.data import Dataset
-from torch.nn import Module, Parameter
-import time
-import matplotlib.pyplot as plt
-import matplotlib.pylab as pylab
-import numpy as np
-import os
 from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
 from tqdm import tqdm
-import pickle
 from src.data_utils import collate_fn, PROJECT_ROOT, targetpad_transform
 from src.datasets_fuck import FashionIQDataset, CIRRDatasetV2, CIRCODatasetV2
 from layout_utils.llm_utils import *
@@ -105,8 +87,7 @@ async def main():
 async def run(dataset, preprocess, args):
 
     dataset_stastic = {}
-    device = torch.device(f'cuda')
-    tokenizer, model = load_model_llm(args, device = device)
+    tokenizer, model = load_model_llm(args)
 
     prompt_configs = load_config(args)
     prompt_system = prompt_configs['layout']['system_prompt']
@@ -130,7 +111,7 @@ async def run(dataset, preprocess, args):
             reference_names = batch['reference_name']
             relative_captions = batch['relative_caption']
             concept = batch['multi_opt'][0]
-            target = batch['multi_gpt_opt'][0]
+            target = []
             bsz = len(concept)
         else:
             reference_names = None

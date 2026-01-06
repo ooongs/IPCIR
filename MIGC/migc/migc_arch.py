@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
-from migc.migc_layers import CBAM, CrossAttention, LayoutAttention
+from MIGC.migc.migc_layers import CBAM, CrossAttention, LayoutAttention
 
 
 class FourierEmbedder():

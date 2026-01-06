@@ -183,7 +183,14 @@ def run(dataset, preprocess, args):
                     tar_ = target[bs]
                     rule = f'generating a image of {tar_}'
                 layout = []
-                flag, layout_info, messages_hash, question_id = llm_layout(args, classes, rule, scene, layout, refer, model, tokenizer, idx, dataset_stastic, prompt_system, examples, random = args.random_layout)
+                flag, layout_info, messages_hash, question_id = llm_layout(
+                    args,
+                    classes,    # [image caption]
+                    rule,   # edit instruction
+                    scene,  # []
+                    layout, # []
+                    refer,
+                    model, tokenizer, idx, dataset_stastic, prompt_system, examples, random = args.random_layout)
 
                 if flag == True:
                     break

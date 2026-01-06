@@ -18,7 +18,7 @@ from maskrcnn_benchmark.modeling.roi_heads.mask_head.inference import Masker
 from maskrcnn_benchmark.utils import cv2_util
 
 engine = inflect.engine()
-nltk.data.path.append('/home/liyou/nltk_data/')
+nltk.data.path.append('/home/llq/nltk_data/')
 # nltk.download('punkt')
 # nltk.download('averaged_perceptron_tagger')
 

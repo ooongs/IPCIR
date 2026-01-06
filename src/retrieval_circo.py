@@ -76,6 +76,7 @@ def circo_generate_test_submission_file(dataset_path: str, clip_model_name: str,
             'feature':index_features,
             'name':index_names,
         }
+        os.makedirs(args.feature_dir, exist_ok=True)
         torch.save(save_content, feature_path)
 
     relative_test_dataset = CIRCODataset(dataset_path, 'test', 'relative', preprocess)
@@ -423,7 +424,7 @@ def circo_generate_test_dict(relative_test_dataset: CIRCODataset, clip_model: CL
                 if args.features_save_path:
                     torch.save(blip_predicted_features, 'feature/blip_predicted_features.pt')
         
-        num_N = 5
+        num_N = 3
         if args.use_debiased_sample:
             neg_diff_val = []
             if args.with_aug:

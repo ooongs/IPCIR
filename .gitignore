@@ -21,3 +21,5 @@ data
 feature/aug_feature
 *mine.sh
 circo_info.json
+run0_ori_numN3/
+circo_test/
